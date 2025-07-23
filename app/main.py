@@ -3,16 +3,9 @@ import os
 import zlib
 
 
-def find_nth(string, substring, n):
-    '''Helper for extract_content'''
-    if (n == 1):
-        return string.find(substring)
-    else:
-        return string.find(substring, find_nth(string, substring, n - 1) + 1)
-
-
-def extract_content(obj: str):
-    return find_nth(obj, " ", 2) + 1
+def extract_content(obj: bytes) -> str:
+    null_byte_loc = obj.find(b'\x00')
+    return obj[null_byte_loc + 1:].decode()
 
 
 def main():
@@ -33,9 +26,8 @@ def main():
             raise RuntimeError(f"Unrecognized flag:{flag1}\nValid options: -p")
 
         with open(f".git/objects/{hash[0:2]}/{hash[2:]}", "rb") as file:
-            obj_raw = file.read()
-            obj_decompressed = zlib.decompress(obj_raw).decode()
-            print(obj_decompressed[extract_content(obj_decompressed):])
+            obj = zlib.decompress(file.read())
+            print(extract_content(obj), end='')
 
     else:
         raise RuntimeError(f"Unknown command #{command}")
